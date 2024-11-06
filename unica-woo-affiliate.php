@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Unica WooCommerce Affiliate
+Plugin Name: Unica Woo Affiliate
 Description: Auto-generate WooCommerce products from Unica.vn API.
 Version: 1.0.0
 Author: Tung Pham, Hoang Anh Phan
@@ -52,12 +52,22 @@ function unica_settings_page() {
         <h2>Manual Product Import</h2>
         <form method="post">
             <input type="hidden" name="unica_manual_import" value="1">
+            <?php wp_nonce_field('import_products_action', 'import_products_nonce'); ?>
             <?php submit_button('Import Products Now', 'primary', 'import_products'); ?>
         </form>
+
         <?php
         if (isset($_POST['unica_manual_import'])) {
-            $import_result = unica_auto_generate_products();
-            echo '<p>' . esc_html($import_result) . '</p>';
+            // Unsplash the nonce value
+            $nonce = isset($_POST['import_products_nonce']) ? sanitize_text_field(wp_unslash($_POST['import_products_nonce'])) : '';
+
+            // Verify nonce and process import
+            if (wp_verify_nonce($nonce, 'import_products_action')) {
+                $import_result = unica_auto_generate_products();
+                echo '<p>' . esc_html($import_result) . '</p>';
+            } else {
+                echo '<p>' . esc_html__('Nonce verification failed.', 'unica-woo-affiliate') . '</p>';
+            }
         }
         ?>
     </div>
@@ -125,20 +135,23 @@ function unica_fetch_affiliate_credentials() {
         return ['error' => $body['error']];
     }
 
+    $aff_id = $body['data']['id'] ?? null;
+    $token = $body['data']['token'] ?? null;
+
+    if ($aff_id && $token) {
+        update_option('unica_aff_id', $aff_id);
+        update_option('unica_token', $token);
+    }
+
     return [
-        'aff_id' => $body['data']['id'] ?? null,
-        'token' => $body['data']['token'] ?? null,
+        'aff_id' => $aff_id,
+        'token' => $token,
     ];
 }
 
 function unica_get_courses_quantity() {
     $api_url = sprintf('%s/api/getCourseList', UNICA_URL);
     $response = wp_remote_get($api_url, ['timeout' => UNICA_TIMEOUT]);
-
-    if (is_wp_error($response)) {
-        error_log("Unica API request failed: " . $response->get_error_message());
-        return [];
-    }
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
     return count($body['data']) ?? [];
@@ -150,37 +163,53 @@ function unica_auto_generate_products() {
     if (isset($credentials['error'])) {
         return $credentials['error'];
     }
-
-    $aff_id = $credentials['aff_id'];
-    $token = $credentials['token'];
+    $aff_id = get_option('unica_aff_id');
+    $token = get_option('unica_token');
+    $current_page = get_option('unica_current_page', 0);
 
     // Check for necessary configurations
     if (empty($aff_id) || empty($token)) {
         return 'Failed to retrieve Affiliate ID and Token from the API.';
     }
 
-    $total_courses = unica_get_courses_quantity();
-
     // Fetch courses from the API
-    $courses = unica_fetch_courses($aff_id, $token);
-    $courses_count = count($courses);
+    $courses = unica_fetch_courses($aff_id, $token, $current_page);
+
+    // Handle no courses case
+    if (empty($courses)) {
+        update_option('unica_current_page', 0);
+        return 'No more products to import.';
+    }
 
     // Create or update products
     array_walk($courses, 'unica_create_or_update_product');
 
+    // Update current page for pagination
+    update_option('unica_current_page', $current_page + 1);
+
     // Return success message
-    return sprintf('%d course%s import completed successfully. Total %d course%s.', $courses_count, ($courses_count > 1 ? 's' : ''), $total_courses, ($total_courses > 1 ? 's' : ''));
+    $courses_count = count($courses);
+    return sprintf('%d course%s import completed successfully in page %d.', $courses_count, ($courses_count > 1 ? 's' : ''), $current_page + 1);
+}
+
+/**
+ * Processes the fetched courses and creates or updates products.
+ *
+ * @param array $courses The array of courses to process.
+ * @return int The number of courses processed.
+ */
+function process_courses(array $courses): int {
+    // Create or update products for the fetched courses
+    array_walk($courses, 'unica_create_or_update_product');
+    
+    // Return the count of processed courses
+    return count($courses);
 }
 
 // Fetch courses from Unica API
-function unica_fetch_courses($aff_id, $token) {
-    $api_url = sprintf('%s/api/courses?aff_id=%s&token=%s', UNICA_URL, $aff_id, $token);
+function unica_fetch_courses($aff_id, $token, $page) {
+    $api_url = sprintf('%s/api/courses?aff_id=%s&token=%s&page=%d', UNICA_URL, $aff_id, $token, $page);
     $response = wp_remote_get($api_url, ['timeout' => UNICA_TIMEOUT]);
-
-    if (is_wp_error($response)) {
-        error_log("Unica API request failed: " . $response->get_error_message());
-        return [];
-    }
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
     return $body['data']['data']['course'] ?? [];
@@ -189,7 +218,11 @@ function unica_fetch_courses($aff_id, $token) {
 // Create or update WooCommerce product
 function unica_create_or_update_product($course) {
     $credentials = unica_fetch_affiliate_credentials();
-    $aff_id = $credentials['aff_id'];
+    if (isset($credentials['error'])) {
+        return $credentials['error'];
+    }
+    $aff_id = get_option('unica_aff_id');
+    $token = get_option('unica_token');
     $product_id = wc_get_product_id_by_sku($course['id']);
 
     if ($product_id) return; // Product already exists
@@ -243,7 +276,7 @@ function upload_image_from_url($url) {
 
     $attachment_id = media_handle_sideload($file);
     if (is_wp_error($attachment_id)) {
-        @unlink($temp_file); // Clean up the temp file
+        wp_delete_file($temp_file); // Clean up the temp file
         return false;
     }
 

@@ -1,6 +1,6 @@
-=== Unica Woo Affiliate - Auto Generate External/Affiliate Products from Unica.vn ===
+=== Unica Woo Affiliate ===
 Contributors: Tung Pham, Hoang Anh Phan
-Tags: WooCommerce, Unica.vn, external products, affiliate products, API integration, product sync
+Tags: WooCommerce, affiliate, external products, product sync, API integration
 Requires at least: 5.2
 Tested up to: 6.6.2
 Requires PHP: 7.2
