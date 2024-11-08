@@ -74,9 +74,11 @@ function render_manual_import_form() {
     if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['set_current_page_nonce'])), 'set_current_page_action')) {
         // Sanitize and save the new page
         $current_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 1;
-    } else {
+    } elseif (isset($_POST['unica_manual_import'])) {
         // Fetch the latest current page value from the database
         $current_page = get_option('unica_current_page') + 2;
+    } else {
+        $current_page = get_option('unica_current_page') + 1;
     }
     ?>
     <h2><?php esc_html_e('Manual Courses Import', 'unica-woo-affiliate'); ?></h2>
@@ -96,14 +98,14 @@ function render_set_current_page_form() {
         $new_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 1;
         update_option('unica_current_page', $new_page - 1);
         $current_page_index = $new_page; // Update the displayed page to the new value
+    } elseif (isset($_POST['unica_manual_import'])) {
+        $current_page_index = get_option('unica_current_page');
     } else {
         // Fetch the latest current page value from the database
-        $current_page_index = get_option('unica_current_page');
+        $current_page_index = get_option('unica_current_page') - 1;
     }
-    // Fetch the current page value from the database
-    $current_page_index = get_option('unica_current_page');
     // Display the current page incremented by 1
-    $displayed_page_index = $current_page_index + 1;
+    $displayed_page_index = get_option('unica_current_page') + 1;
     ?>
     <h2><?php esc_html_e('Set Current Page for Import (each page has at most 15 courses)', 'unica-woo-affiliate'); ?></h2>
     <form method="post">
