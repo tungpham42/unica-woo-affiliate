@@ -41,37 +41,95 @@ function unica_add_admin_menu() {
 function unica_settings_page() {
     ?>
     <div class="wrap">
-        <h1>Unica Affiliate Settings</h1>
-        <form method="post" action="options.php">
-            <?php
-            settings_fields(UNICA_AFFILIATE_OPTIONS);
-            do_settings_sections('unica_affiliate');
-            submit_button();
-            ?>
-        </form>
-        <h2>Manual Product Import</h2>
-        <form method="post">
-            <input type="hidden" name="unica_manual_import" value="1">
-            <?php wp_nonce_field('import_products_action', 'import_products_nonce'); ?>
-            <?php submit_button('Import Products Now', 'primary', 'import_products'); ?>
-        </form>
+        <h1><?php esc_html_e('Unica Affiliate Settings', 'unica-woo-affiliate'); ?></h1>
+
+        <?php render_settings_form(); ?>
+        <?php render_manual_import_form(); ?>
+        <?php render_set_current_page_form(); ?>
 
         <?php
-        if (isset($_POST['unica_manual_import'])) {
-            // Unsplash the nonce value
-            $nonce = isset($_POST['import_products_nonce']) ? sanitize_text_field(wp_unslash($_POST['import_products_nonce'])) : '';
-
-            // Verify nonce and process import
-            if (wp_verify_nonce($nonce, 'import_products_action')) {
-                $import_result = unica_auto_generate_products();
-                echo '<p>' . esc_html($import_result) . '</p>';
-            } else {
-                echo '<p>' . esc_html__('Nonce verification failed.', 'unica-woo-affiliate') . '</p>';
-            }
-        }
+        handle_manual_product_import();
+        handle_set_current_page();
         ?>
     </div>
     <?php
+}
+
+// Render the main settings form
+function render_settings_form() {
+    ?>
+    <form method="post" action="options.php">
+        <?php
+        settings_fields(UNICA_AFFILIATE_OPTIONS);
+        do_settings_sections('unica_affiliate');
+        submit_button();
+        ?>
+    </form>
+    <?php
+}
+
+// Render the manual product import form
+function render_manual_import_form() {
+    ?>
+    <h2><?php esc_html_e('Manual Product Import', 'unica-woo-affiliate'); ?></h2>
+    <form method="post">
+        <input type="hidden" name="unica_manual_import" value="1">
+        <?php wp_nonce_field('import_products_action', 'import_products_nonce'); ?>
+        <?php submit_button(esc_html__('Import Products Now', 'unica-woo-affiliate'), 'primary', 'import_products'); ?>
+    </form>
+    <?php
+}
+
+// Render the set current page form
+function render_set_current_page_form() {
+    // Check if form is submitted and nonce is valid
+    if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce($_POST['set_current_page_nonce'], 'set_current_page_action')) {
+        // Sanitize and save the new page index
+        $new_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 0;
+        update_option('unica_current_page', $new_page);
+        $current_page_index = $new_page; // Update the displayed page index to the new value
+    } else {
+        // Fetch the latest current page index value from the database
+        $current_page_index = get_option('unica_current_page');
+    }
+    ?>
+    <h2><?php esc_html_e('Set Current Page Index for Import', 'unica-woo-affiliate'); ?></h2>
+    <form method="post">
+        <?php wp_nonce_field('set_current_page_action', 'set_current_page_nonce'); ?>
+        <label for="unica_current_page"><?php esc_html_e('Current Page Index (start from 0):', 'unica-woo-affiliate'); ?></label>
+        <input type="number" name="unica_current_page" id="unica_current_page" value="<?php echo esc_attr($current_page_index); ?>">
+        <?php submit_button(esc_html__('Set Page Index', 'unica-woo-affiliate'), 'primary', 'set_current_page'); ?>
+    </form>
+    <?php
+}
+
+// Handle manual product import submission
+function handle_manual_product_import() {
+    if (isset($_POST['unica_manual_import'])) {
+        $nonce = isset($_POST['import_products_nonce']) ? sanitize_text_field(wp_unslash($_POST['import_products_nonce'])) : '';
+        if (wp_verify_nonce($nonce, 'import_products_action')) {
+            $import_result = unica_auto_generate_products();
+            echo '<p>' . esc_html($import_result) . '</p>';
+        } else {
+            echo '<p>' . esc_html__('Nonce verification failed.', 'unica-woo-affiliate') . '</p>';
+        }
+    }
+}
+
+// Handle setting the current page index
+function handle_set_current_page() {
+    if (isset($_POST['set_current_page'])) {
+        $nonce = isset($_POST['set_current_page_nonce']) ? sanitize_text_field(wp_unslash($_POST['set_current_page_nonce'])) : '';
+        if (wp_verify_nonce($nonce, 'set_current_page_action')) {
+            $new_page = isset($_POST['unica_current_page']) ? absint($_POST['unica_current_page']) : 0;
+            update_option('unica_current_page', $new_page);
+
+            // Display a confirmation message with the updated page index
+            echo '<p>' . esc_html__('Current page index updated to ', 'unica-woo-affiliate') . esc_html($new_page) . '</p>';
+        } else {
+            echo '<p>' . esc_html__('Nonce verification failed.', 'unica-woo-affiliate') . '</p>';
+        }
+    }
 }
 
 // Register plugin settings
@@ -208,7 +266,7 @@ function process_courses(array $courses): int {
 
 // Fetch courses from Unica API
 function unica_fetch_courses($aff_id, $token, $page) {
-    $api_url = sprintf('%s/api/courses?aff_id=%s&token=%s&page=%d', UNICA_URL, $aff_id, $token, $page);
+    $api_url = sprintf('%s/api/courses?aff_id=%s&token=%s&page=%d&option=new', UNICA_URL, $aff_id, $token, $page);
     $response = wp_remote_get($api_url, ['timeout' => UNICA_TIMEOUT]);
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
