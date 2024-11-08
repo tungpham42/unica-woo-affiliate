@@ -71,34 +71,38 @@ function render_settings_form() {
 // Render the manual product import form
 function render_manual_import_form() {
     ?>
-    <h2><?php esc_html_e('Manual Product Import', 'unica-woo-affiliate'); ?></h2>
+    <h2><?php esc_html_e('Manual Courses Import', 'unica-woo-affiliate'); ?></h2>
     <form method="post">
         <input type="hidden" name="unica_manual_import" value="1">
         <?php wp_nonce_field('import_products_action', 'import_products_nonce'); ?>
-        <?php submit_button(esc_html__('Import Products Now', 'unica-woo-affiliate'), 'primary', 'import_products'); ?>
+        <?php submit_button(esc_html__('Import Courses Now', 'unica-woo-affiliate'), 'primary', 'import_products'); ?>
     </form>
     <?php
 }
 
-// Render the set current page form
+// Render the set current page form with current page incremented by 1
 function render_set_current_page_form() {
     // Check if form is submitted and nonce is valid
     if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce($_POST['set_current_page_nonce'], 'set_current_page_action')) {
-        // Sanitize and save the new page index
-        $new_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 0;
-        update_option('unica_current_page', $new_page);
-        $current_page_index = $new_page; // Update the displayed page index to the new value
+        // Sanitize and save the new page
+        $new_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 1;
+        update_option('unica_current_page', $new_page - 1);
+        $current_page_index = $new_page; // Update the displayed page to the new value
     } else {
-        // Fetch the latest current page index value from the database
+        // Fetch the latest current page value from the database
         $current_page_index = get_option('unica_current_page');
     }
+    // Fetch the current page value from the database
+    $current_page_index = get_option('unica_current_page');
+    // Display the current page incremented by 1
+    $displayed_page_index = $current_page_index + 1;
     ?>
-    <h2><?php esc_html_e('Set Current Page Index for Import', 'unica-woo-affiliate'); ?></h2>
+    <h2><?php esc_html_e('Set Current Page for Import (each page has at most 15 courses)', 'unica-woo-affiliate'); ?></h2>
     <form method="post">
         <?php wp_nonce_field('set_current_page_action', 'set_current_page_nonce'); ?>
-        <label for="unica_current_page"><?php esc_html_e('Current Page Index (start from 0):', 'unica-woo-affiliate'); ?></label>
-        <input type="number" name="unica_current_page" id="unica_current_page" value="<?php echo esc_attr($current_page_index); ?>">
-        <?php submit_button(esc_html__('Set Page Index', 'unica-woo-affiliate'), 'primary', 'set_current_page'); ?>
+        <label for="unica_current_page"><?php esc_html_e('Current Page (start from 1):', 'unica-woo-affiliate'); ?></label>
+        <input type="number" name="unica_current_page" id="unica_current_page" value="<?php echo esc_attr($displayed_page_index); ?>" min="1">
+        <?php submit_button(esc_html__('Set Page', 'unica-woo-affiliate'), 'primary', 'set_current_page'); ?>
     </form>
     <?php
 }
@@ -116,16 +120,17 @@ function handle_manual_product_import() {
     }
 }
 
-// Handle setting the current page index
+// Handle setting the current page
 function handle_set_current_page() {
     if (isset($_POST['set_current_page'])) {
         $nonce = isset($_POST['set_current_page_nonce']) ? sanitize_text_field(wp_unslash($_POST['set_current_page_nonce'])) : '';
         if (wp_verify_nonce($nonce, 'set_current_page_action')) {
-            $new_page = isset($_POST['unica_current_page']) ? absint($_POST['unica_current_page']) : 0;
+            // Adjust the input by subtracting 1 to store the correct zero-based index
+            $new_page = isset($_POST['unica_current_page']) ? max(intval($_POST['unica_current_page']) - 1, 0) : 0;
             update_option('unica_current_page', $new_page);
 
-            // Display a confirmation message with the updated page index
-            echo '<p>' . esc_html__('Current page index updated to ', 'unica-woo-affiliate') . esc_html($new_page) . '</p>';
+            // Display a confirmation message with the updated page
+            echo '<p>' . esc_html__('Current page updated to ', 'unica-woo-affiliate') . esc_html($new_page + 1) . '</p>';
         } else {
             echo '<p>' . esc_html__('Nonce verification failed.', 'unica-woo-affiliate') . '</p>';
         }
