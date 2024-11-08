@@ -249,7 +249,7 @@ function unica_auto_generate_products() {
     // Handle no courses case
     if (empty($courses)) {
         update_option('unica_current_page', 0);
-        return 'No more products to import.';
+        return 'No more course to import.';
     }
 
     // Create or update products
