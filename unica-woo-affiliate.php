@@ -253,13 +253,11 @@ function unica_auto_generate_products() {
     }
 
     // Create or update products
-    array_walk($courses, 'unica_create_or_update_product');
+    $courses_count = process_courses($courses);
 
     // Update current page for pagination
     update_option('unica_current_page', $current_page + 1);
 
-    // Return success message
-    $courses_count = count($courses);
     return sprintf('%d course%s import completed successfully in page %d.', $courses_count, ($courses_count > 1 ? 's' : ''), $current_page + 1);
 }
 
