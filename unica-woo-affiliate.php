@@ -71,7 +71,7 @@ function render_settings_form() {
 // Render the manual product import form
 function render_manual_import_form() {
     // Check if form is submitted and nonce is valid
-    if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce($_POST['set_current_page_nonce'], 'set_current_page_action')) {
+    if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['set_current_page_nonce'])), 'set_current_page_action')) {
         // Sanitize and save the new page
         $current_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 1;
     } else {
@@ -83,7 +83,7 @@ function render_manual_import_form() {
     <form method="post">
         <input type="hidden" name="unica_manual_import" value="1">
         <?php wp_nonce_field('import_products_action', 'import_products_nonce'); ?>
-        <?php submit_button(esc_html__(sprintf('Import courses in page number %d now', $current_page), 'unica-woo-affiliate'), 'primary', 'import_products'); ?>
+        <?php submit_button(sprintf('Import courses in page number %d now', $current_page), 'primary', 'import_products'); ?>
     </form>
     <?php
 }
@@ -91,7 +91,7 @@ function render_manual_import_form() {
 // Render the set current page form with current page incremented by 1
 function render_set_current_page_form() {
     // Check if form is submitted and nonce is valid
-    if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce($_POST['set_current_page_nonce'], 'set_current_page_action')) {
+    if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['set_current_page_nonce'])), 'set_current_page_action')) {
         // Sanitize and save the new page
         $new_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 1;
         update_option('unica_current_page', $new_page - 1);
