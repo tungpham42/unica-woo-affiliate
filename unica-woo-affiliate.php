@@ -70,12 +70,20 @@ function render_settings_form() {
 
 // Render the manual product import form
 function render_manual_import_form() {
+    // Check if form is submitted and nonce is valid
+    if (isset($_POST['set_current_page_nonce']) && wp_verify_nonce($_POST['set_current_page_nonce'], 'set_current_page_action')) {
+        // Sanitize and save the new page
+        $current_page = isset($_POST['unica_current_page']) ? intval($_POST['unica_current_page']) : 1;
+    } else {
+        // Fetch the latest current page value from the database
+        $current_page = get_option('unica_current_page') + 2;
+    }
     ?>
     <h2><?php esc_html_e('Manual Courses Import', 'unica-woo-affiliate'); ?></h2>
     <form method="post">
         <input type="hidden" name="unica_manual_import" value="1">
         <?php wp_nonce_field('import_products_action', 'import_products_nonce'); ?>
-        <?php submit_button(esc_html__('Import Courses Now', 'unica-woo-affiliate'), 'primary', 'import_products'); ?>
+        <?php submit_button(esc_html__(sprintf('Import courses in page number %d now', $current_page), 'unica-woo-affiliate'), 'primary', 'import_products'); ?>
     </form>
     <?php
 }
