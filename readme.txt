@@ -46,12 +46,6 @@ Currently, the plugin imports all available products from Unica.vn.
 = How does product updating work? =
 The plugin checks for changes based on your chosen synchronization schedule. You can also run a manual sync to refresh product information immediately.
 
-== Screenshots ==
-
-1. **Settings Page** - Configure your Unica.vn API credentials, button text, and coupon code.
-2. **Manual Product Import** - Sync products manually from Unica.vn.
-3. **External Product List** - View and manage imported affiliate products in WooCommerce.
-
 == Changelog ==
 
 = 1.0.0 =
