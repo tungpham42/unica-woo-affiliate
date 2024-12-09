@@ -1,6 +1,6 @@
-=== Unica Woo Affiliate - Auto Generate External/Affiliate Products from Unica.vn ===
-Contributors: Tung Pham, Hoang Anh Phan
-Tags: WooCommerce, Unica.vn, external products, affiliate products, API integration, product sync
+=== Unica Woo Affiliate ===
+Contributors: Tung Pham, Hoang Anh Phan, hoanganhphan91
+Tags: WooCommerce, affiliate, external products, product sync, API integration
 Requires at least: 5.2
 Tested up to: 6.6.2
 Requires PHP: 7.2
@@ -13,6 +13,9 @@ Automatically import external/affiliate products from Unica.vn into your WooComm
 == Description ==
 
 **Unica Woo Affiliate** is a WordPress plugin designed to import and synchronize external/affiliate products from Unica.vn into WooCommerce. By connecting with the Unica.vn API, this plugin fetches product information like titles, descriptions, prices, images, and affiliate links, enabling WooCommerce store owners to promote Unica.vn products seamlessly.
+
+### Important Note to Users
+This plugin requires you to log in with your **Unica.vn email and password** to fetch data about courses and generate affiliate links for your WooCommerce store. These credentials are securely sent to Unica.vn through their API and are used solely for the purpose of importing and synchronizing product data. The plugin does not store your password locally; only an API token is stored to maintain the connection.
 
 ### Features
 * Import Unica.vn products as external/affiliate products in WooCommerce.
@@ -30,17 +33,33 @@ Automatically import external/affiliate products from Unica.vn into your WooComm
 
 1. **Configure Plugin Settings**:
    - Go to the **Unica Affiliate** menu in the WordPress sidebar.
-   - Enter your Unica.vn **username**, **password**, preferred **button text** for the affiliate link, and **coupon code** if applicable.
+   - Enter your Unica.vn **email**, **password**, preferred **button text** for the affiliate link, and **coupon code** if applicable.
 2. **Manual Product Import**:
    - Under **Manual Product Import**, click "Import products now" to fetch products immediately from Unica.vn.
 3. **Product Management**: Imported products will appear in **WooCommerce > Products** as external/affiliate products, linking directly to Unica.vn with your specified button text and coupon code.
 
+== External Services ==
+
+This plugin connects to the Unica.vn API to import product data into WooCommerce. It is required to fetch and synchronize affiliate product information like titles, descriptions, prices, images, and affiliate URLs.
+
+**What data is sent:**
+- The Unica.vn email and password you provide during plugin configuration are securely transmitted to Unica.vn to authenticate your account and fetch product data. After successful authentication, an API token is stored locally for subsequent communication.
+
+**When data is sent:**
+- Data is sent only during the initial configuration and when the plugin syncs products (either manually or automatically).
+
+**Service provider:**
+- Unica.vn API: [Terms of Service](https://unica.vn/dieu-khoan-dich-vu.html) | [Privacy Policy](https://unica.vn/chinh-sach-bao-mat.html)
+
 == Frequently Asked Questions ==
 
-= How do I get my Unica.vn Affiliate ID? =
-Log in to your Unica.vn account, navigate to **https://unica.vn/dashboard/affiliate/api**, and generate an Affiliate ID. After that, you can login with our plugin with your Unica account.
+= Why does the plugin need my Unica.vn email and password? =
+Your Unica.vn credentials are required to authenticate with the Unica.vn API and fetch course data to display in your WooCommerce store. The plugin does not store your password permanently but uses it to retrieve an API token for future communication.
 
-= What if I only want specific products from Unica.vn? =
+= How do I get my Unica.vn Affiliate ID? =
+Log in to your Unica.vn account, request to ** https://unica.vn/api/getToken/**, and generate an Affiliate ID and Token. After that, you can login with our plugin with your Unica account.
+
+= Can I choose which products to import? =
 Currently, the plugin imports all available products from Unica.vn.
 
 = How does product updating work? =
