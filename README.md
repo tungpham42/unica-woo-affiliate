@@ -1,5 +1,5 @@
 === Unica Woo Affiliate ===
-Contributors: Tung Pham, Hoang Anh Phan, hoanganhphan91
+Contributors: tungpham42, hoanganhphan91
 Tags: WooCommerce, affiliate, external products, product sync, API integration
 Requires at least: 5.2
 Tested up to: 6.6.2
